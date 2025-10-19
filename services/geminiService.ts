@@ -1,11 +1,10 @@
 import { GoogleGenAI, Chat } from "@google/genai";
-import type { TestAnswers, ChatMessage } from '../types';
+import type { TestAnswers, ChatMessage } from "../types";
 
-if (!process.env.API_KEY) {
-    throw new Error("API_KEY environment variable not set");
-}
-
-const ai = new GoogleGenAI({ apiKey: process.env.API_KEY });
+const ai = new GoogleGenAI({
+  apiKey: "PROXY_API_KEY",
+  baseURL: "/api-proxy",
+});
 let chatInstance: Chat | null = null;
 
 const TUTOR_SYSTEM_INSTRUCTION = `
@@ -28,15 +27,15 @@ const getTestEvaluationPrompt = (answers: TestAnswers) => `
 Você é um professor muito gentil e encorajador, avaliando a prova de um aluno de 9 anos. O nome do aluno é ${answers.name || "Jovem Detetive"}.
 
 Aqui estão as respostas dele:
-- Pergunta 1 (Família da palavra SOL): "${answers.question1 || 'Não respondeu'}"
-- Pergunta 2a (gosto + -oso): Palavra: "${answers.question2a_word || 'Não respondeu'}". Significado: "${answers.question2a_meaning || 'Não respondeu'}"
-- Pergunta 2b (carta + -ista): Palavra: "${answers.question2b_word || 'Não respondeu'}"
-- Pergunta 2c (justo + in-): Palavra: "${answers.question2c_word || 'Não respondeu'}"
-- Pergunta 3 (Profissões): Dentista: "${answers.question3_dentist || 'Não respondeu'}", Jornalista: "${answers.question3_journalist || 'Não respondeu'}", Floricultura: "${answers.question3_flowershop || 'Não respondeu'}"
-- Pergunta 4 (Personagens): "${answers.question4 || 'Não respondeu'}"
-- Pergunta 5 (Conflito): "${answers.question5 || 'Não respondeu'}"
-- Pergunta 6 (Narrador): "${answers.question6 || 'Não respondeu'}"
-- Pergunta 7 (Inferência - plano do esquilo): "${answers.question7 || 'Não respondeu'}"
+- Pergunta 1 (Família da palavra SOL): "${answers.question1 || "Não respondeu"}"
+- Pergunta 2a (gosto + -oso): Palavra: "${answers.question2a_word || "Não respondeu"}". Significado: "${answers.question2a_meaning || "Não respondeu"}"
+- Pergunta 2b (carta + -ista): Palavra: "${answers.question2b_word || "Não respondeu"}"
+- Pergunta 2c (justo + in-): Palavra: "${answers.question2c_word || "Não respondeu"}"
+- Pergunta 3 (Profissões): Dentista: "${answers.question3_dentist || "Não respondeu"}", Jornalista: "${answers.question3_journalist || "Não respondeu"}", Floricultura: "${answers.question3_flowershop || "Não respondeu"}"
+- Pergunta 4 (Personagens): "${answers.question4 || "Não respondeu"}"
+- Pergunta 5 (Conflito): "${answers.question5 || "Não respondeu"}"
+- Pergunta 6 (Narrador): "${answers.question6 || "Não respondeu"}"
+- Pergunta 7 (Inferência - plano do esquilo): "${answers.question7 || "Não respondeu"}"
 
 Aqui está o gabarito com as respostas esperadas:
 - Pergunta 1: Exemplos: SOLAR (relativo ao sol), ENSOLARADO (com muito sol), GIRASSOL (flor que gira para o sol). O importante é ter "sol" na base e fazer sentido.
@@ -64,7 +63,7 @@ export const evaluateTest = async (answers: TestAnswers): Promise<string> => {
   try {
     const prompt = getTestEvaluationPrompt(answers);
     const response = await ai.models.generateContent({
-      model: 'gemini-2.5-flash',
+      model: "gemini-2.5-flash",
       contents: prompt,
     });
     return response.text;
@@ -74,24 +73,26 @@ export const evaluateTest = async (answers: TestAnswers): Promise<string> => {
   }
 };
 
-export const getTutorResponse = async (history: ChatMessage[], newMessage: string): Promise<string> => {
+export const getTutorResponse = async (
+  history: ChatMessage[],
+  newMessage: string,
+): Promise<string> => {
   try {
     if (!chatInstance) {
-        chatInstance = ai.chats.create({
-            model: 'gemini-2.5-flash',
-            config: {
-                systemInstruction: TUTOR_SYSTEM_INSTRUCTION,
-            },
-            history: history.map(msg => ({
-                role: msg.role,
-                parts: [{ text: msg.text }]
-            }))
-        });
+      chatInstance = ai.chats.create({
+        model: "gemini-2.5-flash",
+        config: {
+          systemInstruction: TUTOR_SYSTEM_INSTRUCTION,
+        },
+        history: history.map((msg) => ({
+          role: msg.role,
+          parts: [{ text: msg.text }],
+        })),
+      });
     }
-    
-    const response = await chatInstance.sendMessage({ message: newMessage });
-    return response.text;
 
+    const response = await chatInstance.sendMessage(newMessage);
+    return response.text;
   } catch (error) {
     console.error("Error getting tutor response:", error);
     return "Oh não! Meu cérebro de coruja deu um nó. Podemos tentar essa pergunta de novo?";
