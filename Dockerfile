@@ -14,7 +14,6 @@ RUN npm install
 
 # Install dependencies and build the frontend
 WORKDIR /app
-RUN mkdir dist
 RUN bash -c 'if [ -f package.json ]; then npm install && npm run build; fi'
 
 
@@ -23,8 +22,10 @@ FROM node:22
 
 WORKDIR /app
 
-#Copy server files
-COPY --from=builder /app/server .
+# Copy server files and package.json
+COPY --from=builder /app/server/package.json ./package.json
+COPY --from=builder /app/server/server.js ./server.js
+COPY --from=builder /app/server/node_modules ./node_modules
 # Copy built frontend assets from the builder stage
 COPY --from=builder /app/dist ./dist
 
