@@ -1,11 +1,8 @@
-import { GoogleGenAI, Chat } from "@google/genai";
 import type { TestAnswers, ChatMessage } from "../types";
 
-const ai = new GoogleGenAI({
-  apiKey: "PROXY_API_KEY",
-  baseURL: "/api-proxy",
-});
-let chatInstance: Chat | null = null;
+// Direct fetch calls to our proxy instead of using @google/genai library
+const PROXY_BASE_URL = "/api-proxy";
+let chatHistory: ChatMessage[] = [];
 
 const TUTOR_SYSTEM_INSTRUCTION = `
 Você é o Professor Sábio, um tutor amigável e paciente. Sua missão é ajudar uma criança de 9 anos a estudar para uma prova de português. O conteúdo que você deve ensinar é EXCLUSIVamente sobre:
@@ -31,7 +28,7 @@ Aqui estão as respostas dele:
 - Pergunta 2a (gosto + -oso): Palavra: "${answers.question2a_word || "Não respondeu"}". Significado: "${answers.question2a_meaning || "Não respondeu"}"
 - Pergunta 2b (carta + -ista): Palavra: "${answers.question2b_word || "Não respondeu"}"
 - Pergunta 2c (justo + in-): Palavra: "${answers.question2c_word || "Não respondeu"}"
-- Pergunta 3 (Profissões): Dentista: "${answers.question3_dentist || "Não respondeu"}", Jornalista: "${answers.question3_journalist || "Não respondeu"}", Floricultura: "${answers.question3_flowershop || "Não respondeu"}"
+- Pergunta 3 (Profissões): Dentista: "${answers.question3_dentist || "Não respondeu"}", Pintor: "${answers.question3_painter || "Não respondeu"}", Floricultura: "${answers.question3_flowershop || "Não respondeu"}"
 - Pergunta 4 (Personagens): "${answers.question4 || "Não respondeu"}"
 - Pergunta 5 (Conflito): "${answers.question5 || "Não respondeu"}"
 - Pergunta 6 (Narrador): "${answers.question6 || "Não respondeu"}"
@@ -59,14 +56,46 @@ Sua tarefa é comparar as respostas do aluno com o gabarito e fornecer um feedba
 - Seja breve e direto em cada ponto.
 `;
 
+// Helper function to make API calls through our proxy
+const callGeminiAPI = async (contents: any[], systemInstruction?: string) => {
+  const requestBody: any = {
+    contents: contents,
+    generationConfig: {
+      temperature: 0.7,
+      topK: 40,
+      topP: 0.95,
+      maxOutputTokens: 12288,
+    },
+  };
+
+  if (systemInstruction) {
+    requestBody.systemInstruction = {
+      parts: [{ text: systemInstruction }],
+    };
+  }
+
+  const response = await fetch(`${PROXY_BASE_URL}/v1beta/models/gemini-2.5-flash:generateContent`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(requestBody),
+  });
+
+  if (!response.ok) {
+    const errorData = await response.json();
+    throw new Error(`API Error: ${response.status} - ${JSON.stringify(errorData)}`);
+  }
+
+  const data = await response.json();
+  return data.candidates[0].content.parts[0].text;
+};
+
 export const evaluateTest = async (answers: TestAnswers): Promise<string> => {
   try {
     const prompt = getTestEvaluationPrompt(answers);
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: prompt,
-    });
-    return response.text;
+    const response = await callGeminiAPI([{ role: "user", parts: [{ text: prompt }] }]);
+    return response;
   } catch (error) {
     console.error("Error evaluating test:", error);
     return "Ops! Ocorreu um erro ao tentar corrigir sua prova. Por favor, tente novamente mais tarde.";
@@ -78,21 +107,24 @@ export const getTutorResponse = async (
   newMessage: string,
 ): Promise<string> => {
   try {
-    if (!chatInstance) {
-      chatInstance = ai.chats.create({
-        model: "gemini-2.5-flash",
-        config: {
-          systemInstruction: TUTOR_SYSTEM_INSTRUCTION,
-        },
-        history: history.map((msg) => ({
-          role: msg.role,
-          parts: [{ text: msg.text }],
-        })),
-      });
-    }
+    // Build conversation history for the API
+    const conversationHistory = [
+      {
+        role: "user",
+        parts: [{ text: TUTOR_SYSTEM_INSTRUCTION }],
+      },
+      ...history.map((msg) => ({
+        role: msg.role,
+        parts: [{ text: msg.text }],
+      })),
+      {
+        role: "user",
+        parts: [{ text: newMessage }],
+      },
+    ];
 
-    const response = await chatInstance.sendMessage(newMessage);
-    return response.text;
+    const response = await callGeminiAPI(conversationHistory);
+    return response;
   } catch (error) {
     console.error("Error getting tutor response:", error);
     return "Oh não! Meu cérebro de coruja deu um nó. Podemos tentar essa pergunta de novo?";
