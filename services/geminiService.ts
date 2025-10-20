@@ -26,7 +26,7 @@ Você é um professor muito gentil e encorajador, avaliando a prova de um aluno 
 Aqui estão as respostas dele:
 - Pergunta 1 (Família da palavra SOL): "${answers.question1 || "Não respondeu"}"
 - Pergunta 2a (gosto + -oso): Palavra: "${answers.question2a_word || "Não respondeu"}". Significado: "${answers.question2a_meaning || "Não respondeu"}"
-- Pergunta 2b (carta + -ista): Palavra: "${answers.question2b_word || "Não respondeu"}"
+- Pergunta 2b (surfar + -ista): Palavra: "${answers.question2b_word || "Não respondeu"}"
 - Pergunta 2c (justo + in-): Palavra: "${answers.question2c_word || "Não respondeu"}"
 - Pergunta 3 (Profissões): Dentista: "${answers.question3_dentist || "Não respondeu"}", Pintor: "${answers.question3_painter || "Não respondeu"}", Floricultura: "${answers.question3_flowershop || "Não respondeu"}"
 - Pergunta 4 (Personagens): "${answers.question4 || "Não respondeu"}"
@@ -37,9 +37,9 @@ Aqui estão as respostas dele:
 Aqui está o gabarito com as respostas esperadas:
 - Pergunta 1: Exemplos: SOLAR (relativo ao sol), ENSOLARADO (com muito sol), GIRASSOL (flor que gira para o sol). O importante é ter "sol" na base e fazer sentido.
 - Pergunta 2a: Palavra: "gostoso". Significado: "cheio de gosto" ou "com muito sabor".
-- Pergunta 2b: Palavra: "cartista" (ou "carteiro").
+- Pergunta 2b: Palavra: "surfista".
 - Pergunta 2c: Palavra: "injusto".
-- Pergunta 3: Dentista, Jornalista, Floricultura.
+- Pergunta 3: Dentista, Pintor, Floricultura.
 - Pergunta 4: O esquilo e o gato.
 - Pergunta 5: O esquilo está com medo porque o gato quer caçá-lo, e o esquilo está pensando em um plano para se defender ou enganar o gato.
 - Pergunta 6: Alguém de fora contando a história (em 3ª pessoa).
