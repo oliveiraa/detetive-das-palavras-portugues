@@ -11,7 +11,7 @@ export interface TestAnswers {
   question2b_word: string;
   question2c_word: string;
   question3_dentist: string;
-  question3_journalist: string;
+  question3_painter: string;
   question3_flowershop: string;
   question4: string;
   question5: string;

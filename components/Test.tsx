@@ -70,8 +70,36 @@ const Test: React.FC<TestProps> = ({ onBack }) => {
     e.preventDefault();
     setIsLoading(true);
     setFeedback("");
+
+    // Evaluate the test with AI
     const result = await evaluateTest(answers);
     setFeedback(result);
+
+    // Save test results to Firestore
+    try {
+      const testResult = {
+        ...answers,
+        feedback: result,
+        timestamp: new Date().toISOString(),
+      };
+
+      const response = await fetch('/api/save-test', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(testResult),
+      });
+
+      if (!response.ok) {
+        console.warn('Failed to save test result to Firestore:', await response.text());
+      } else {
+        console.log('Test result saved to Firestore successfully');
+      }
+    } catch (error) {
+      console.warn('Error saving test result to Firestore:', error);
+    }
+
     setIsLoading(false);
     window.scrollTo(0, document.body.scrollHeight);
   };

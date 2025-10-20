@@ -14,6 +14,37 @@ const WebSocket = require('ws');
 const { URLSearchParams, URL } = require('url');
 const rateLimit = require('express-rate-limit');
 
+// Initialize Firebase Admin SDK for Firestore
+const admin = require('firebase-admin');
+let firestore = null;
+
+try {
+    // On Cloud Run, use default credentials automatically
+    // For local development, you can set GOOGLE_APPLICATION_CREDENTIALS environment variable
+    let databaseURL;
+    
+    if (process.env.FIREBASE_CONFIG) {
+        try {
+            const firebaseConfig = JSON.parse(process.env.FIREBASE_CONFIG);
+            databaseURL = firebaseConfig.databaseURL;
+        } catch (parseError) {
+            console.warn('Failed to parse FIREBASE_CONFIG, using default database:', parseError.message);
+            databaseURL = 'https://detetiva-das-palavras.firebaseio.com';
+        }
+    } else {
+        databaseURL = 'https://detetiva-das-palavras.firebaseio.com';
+    }
+    
+    admin.initializeApp({
+        databaseURL: databaseURL
+    });
+    firestore = admin.firestore();
+    console.log('Firestore initialized successfully with database:', databaseURL);
+} catch (error) {
+    console.warn('Firestore initialization failed:', error.message);
+    console.warn('Test results will not be saved to database');
+}
+
 const app = express();
 const port = process.env.PORT || 3000;
 const externalApiBaseUrl = 'https://generativelanguage.googleapis.com';
@@ -246,6 +277,44 @@ app.get('/websocket-interceptor.js', (req, res) => {
 
 app.use(express.static(publicPath));
 app.use(express.static(staticPath));
+
+// Endpoint to save test results to Firestore
+app.post('/api/save-test', async (req, res) => {
+    if (!firestore) {
+        return res.status(500).json({ error: 'Firestore not initialized' });
+    }
+
+    try {
+        const testResult = req.body;
+        
+        // Validate required fields
+        if (!testResult.name || !testResult.timestamp) {
+            return res.status(400).json({ error: 'Missing required fields: name and timestamp' });
+        }
+
+        // Add timestamp if not provided
+        if (!testResult.timestamp) {
+            testResult.timestamp = new Date().toISOString();
+        }
+
+        // Save to Firestore
+        const docRef = await firestore.collection('testResults').add(testResult);
+        
+        console.log(`Test result saved for ${testResult.name} with ID: ${docRef.id}`);
+        
+        res.status(200).json({ 
+            success: true, 
+            id: docRef.id,
+            message: 'Test result saved successfully'
+        });
+    } catch (error) {
+        console.error('Error saving test result to Firestore:', error);
+        res.status(500).json({ 
+            error: 'Failed to save test result',
+            details: error.message
+        });
+    }
+});
 
 // Start the HTTP server
 const server = app.listen(port, () => {
