@@ -35,7 +35,7 @@ const initialAnswers: TestAnswers = {
   question2b_word: "",
   question2c_word: "",
   question3_dentist: "",
-  question3_journalist: "",
+  question3_painter: "",
   question3_flowershop: "",
   question4: "",
   question5: "",
@@ -158,13 +158,13 @@ const Test: React.FC<TestProps> = ({ onBack }) => {
                     name="question2a_meaning"
                     value={answers.question2a_meaning}
                     onChange={handleInputChange}
-                    placeholder="Significado: O bolo é cheio de..."
+                    placeholder="Significado: que tem um sabor agradável"
                   />
                 </div>
                 <div className="space-y-2">
                   <label>
-                    b) O carteiro trouxe muitas cartas para a ___________
-                    (palavra primitiva: carta, sufixo: -ista).
+                    b) A pessoa que pratica surf é ___________ (palavra
+                    primitiva: surfar, sufixo: -ista).
                   </label>
                   <Input
                     type="text"
@@ -209,12 +209,12 @@ const Test: React.FC<TestProps> = ({ onBack }) => {
                 </div>
                 <div>
                   <label className="block text-slate-600 mb-1">
-                    b) Quem trabalha com jornal?
+                    b) Quem pinta quadros?
                   </label>
                   <Input
                     type="text"
-                    name="question3_journalist"
-                    value={answers.question3_journalist}
+                    name="question3_painter"
+                    value={answers.question3_painter}
                     onChange={handleInputChange}
                     placeholder="Digite a profissão..."
                   />
