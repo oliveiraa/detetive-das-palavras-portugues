@@ -36,7 +36,8 @@ try {
     }
     
     admin.initializeApp({
-        databaseURL: databaseURL
+        databaseURL: databaseURL,
+        projectId: 'gen-lang-client-0900539959'
     });
     firestore = admin.firestore();
     console.log('Firestore initialized successfully with database:', databaseURL);
