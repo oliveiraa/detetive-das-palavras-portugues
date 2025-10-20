@@ -1,15 +1,15 @@
 /**
  * @license
  * Copyright 2025 Google LLC
- * SPDX-License-Identifier: Apache-2.0
+ * SPDX-License-Identifier:Apache-2.0
  */
 
-require('dotenv').config();
 const express = require('express');
 const fs = require('fs');
 const axios = require('axios');
 const https = require('https');
 const path = require('path');
+require('dotenv').config({ path: path.resolve(__dirname, '../.env') });
 const WebSocket = require('ws');
 const { URLSearchParams, URL } = require('url');
 const rateLimit = require('express-rate-limit');
@@ -174,14 +174,14 @@ app.use('/api-proxy', async (req, res, next) => {
     }
 });
 
-const webSocketInterceptorScriptTag = `<script src="/public/websocket-interceptor.js" defer></script>`;
+const webSocketInterceptorScriptTag = `<script src="/websocket-interceptor.js" defer></script>`;
 
 // Prepare service worker registration script content
 const serviceWorkerRegistrationScript = `
 <script>
 if ('serviceWorker' in navigator) {
   window.addEventListener('load' , () => {
-    navigator.serviceWorker.register('./service-worker.js')
+    navigator.serviceWorker.register('/service-worker.js')
       .then(registration => {
         console.log('Service Worker registered successfully with scope:', registration.scope);
       })
@@ -240,7 +240,11 @@ app.get('/service-worker.js', (req, res) => {
    return res.sendFile(path.join(publicPath, 'service-worker.js'));
 });
 
-app.use('/public', express.static(publicPath));
+app.get('/websocket-interceptor.js', (req, res) => {
+   return res.sendFile(path.join(publicPath, 'websocket-interceptor.js'));
+});
+
+app.use(express.static(publicPath));
 app.use(express.static(staticPath));
 
 // Start the HTTP server

@@ -5,8 +5,6 @@ WORKDIR /app
 
 # Copy all files from the current directory
 COPY . ./
-RUN echo "API_KEY=PLACEHOLDER" > ./.env
-RUN echo "GEMINI_API_KEY=PLACEHOLDER" >> ./.env
 
 # Install server dependencies
 WORKDIR /app/server
@@ -28,6 +26,8 @@ COPY --from=builder /app/server/server.js ./server.js
 COPY --from=builder /app/server/node_modules ./node_modules
 # Copy built frontend assets from the builder stage
 COPY --from=builder /app/dist ./dist
+# Copy public files
+COPY --from=builder /app/server/public ./public
 
 EXPOSE 3000
 
